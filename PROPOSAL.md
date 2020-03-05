@@ -108,7 +108,8 @@ There will be a standard text file format that user can pass into application an
 “Time: 3/14/2020 3:45-4:45; Blacklist: facebook.com, TIme: 3/14/2020 5:00-6:00; Whitelist: google.com”
 
 ## Icloud front-end (python) (for stretch goal)
-We will use an existing python library: https://github.com/picklepete/pyicloud  to access icloud data. Ideally we would do this in rust, but it may not be time feasible
-users will provide the name of the calendar tag to use to identify events. In the “notes” section of the event they will write “blacklist: [...]” or “whitelist: [...]”
+We will use an existing python library: https://github.com/picklepete/pyicloud  to access icloud data. Ideally we would do this in rust, but it may not be time feasible.
+
+Users will provide the name of the calendar tag to use to identify events. In the “notes” section of the event they will write “blacklist: [...]” or “whitelist: [...]”
 
 
