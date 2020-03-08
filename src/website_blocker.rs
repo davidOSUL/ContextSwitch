@@ -3,6 +3,7 @@ use std::fs::File;
 use std::fs::copy;
 use std::io::prelude::*;
 use std::path::Path;
+use std::path::PathBuf;
 use std::error::Error;
 use std::collections::HashSet;
 
@@ -16,7 +17,7 @@ enum BlockerError { // todo convert this into an actual error type
 }
 
 struct HostBlocker {
-    hosts_path: Path,
+    hosts_path: PathBuf,
     redirect: &'static str,
     blocked_sites: HashSet<Website>
 }
@@ -28,14 +29,14 @@ trait WebsiteBlocker {
     
     fn unblock(&self, w: Website) -> Result<(), BlockerError>;
 
-    fn clear(&self) -> Result<(), Error>;
+    fn clear(&self) -> Result<(), Box<dyn Error>>;
 }
 
 impl WebsiteBlocker for HostBlocker {
-    fn new() ->  Result<(Self), Error> { // todo parse hosts file and see what is already blocked or unblock everything
-        
+    fn new() ->  Result<(Self), Box<dyn Error>> { // todo parse hosts file and see what is already blocked or unblock everything
+
         let new_hostblocker = HostBlocker { 
-            hosts_path: Path::new("/etc/hosts"),
+            hosts_path: PathBuf::from("/etc/hosts"),
             redirect: "127.0.0.1",
             blocked_sites: HashSet::new()  
         };

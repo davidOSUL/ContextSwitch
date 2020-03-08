@@ -1,14 +1,14 @@
 use url::{Url, ParseError};
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Website {
     url : Url
 }
 
 impl Website {
     pub fn from_path(path : &str) -> Result<Self, ParseError> {
-        Website {
+        Ok(Website {
             url: Url::parse(path)?
-        }.into();
+        })
     }
 }

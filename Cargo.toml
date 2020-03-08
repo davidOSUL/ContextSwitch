@@ -9,6 +9,12 @@ edition = "2018"
 [dependencies]
 url = "2.1.1"
 chrono = "0.4.11"
+intervaltree = "0.2.5"
+
+
+
+
+
 
 
 
