@@ -23,7 +23,7 @@ struct HostBlocker {
 }
 
 trait WebsiteBlocker {
-    fn new() -> Self;
+    fn new() -> Result<(Self), Box<dyn Error>> where Self: Sized;
     
     fn block(&self, w: Website) -> Result<(), BlockerError>;
     
@@ -52,9 +52,10 @@ impl WebsiteBlocker for HostBlocker {
         
         //let file_words: Vec<&str> = file_contents.split_whitespace().collect();
 
-        if !self.blocked_sites.contains(w) {
+        if !self.blocked_sites.contains(&w) {
             self.blocked_sites.insert(w);
             self.sync_hosts()?;
+            Ok(())
         } else {
             Err(BlockerError::SiteAlreadyBlocked)
         }
@@ -64,17 +65,18 @@ impl WebsiteBlocker for HostBlocker {
     fn unblock(&self, w: Website) -> Result<(), BlockerError> {
 
 
-        if self.blocked_sites.contains(w) {
-            self.blocked_sites.remove(w);
+        if self.blocked_sites.contains(&w) {
+            self.blocked_sites.remove(&w);
             self.sync_hosts()?;
+            Ok(())
         } else {
-            Err(BlockerError::SiteAlreadyUnBlocked)
+            Err(BlockerError::SiteAlreadyUnblocked)
         }
     }
 
     fn clear(&self) -> Result<(), BlockerError> {
         self.reset_hosts();
-        let hosts2_path = self.path.join("2");
+        let hosts2_path = self.hosts_path.join("2");
         std::fs::remove_file(hosts2_path).map_err(|_e| Err(BlockerError::FailedToSerialize))?;
         self.blocked_sites.clear();
         Ok(())
@@ -94,9 +96,10 @@ impl HostBlocker {
                                             .map_err(|_e| Err(BlockerError::FailedToDeserialize))?;
 
         for site in self.blocked_sites.iter() {
-            hosts_file.write(format!("\n{} {}", self.redirect, site.url.as_str()).as_bytes())
+            hosts_file.write(format!("\n{} {}", self.redirect, site.get_url().as_str()).as_bytes())
             .map_err(|_e| Err(BlockerError::FailedToSerialize))?;            
         }
+        Ok(())
     }
 
     // resets hosts back to its original state
@@ -105,9 +108,9 @@ impl HostBlocker {
             return Err(BlockerError::FailedToDeserialize);
         }
 
-        let hosts2_path = self.path.join("2");
+        let hosts2_path = self.hosts_path.join("2");
 
-        if !self.hosts2_path.exists() {
+        if !hosts2_path.exists() {
             return Err(BlockerError::FailedToDeserialize);
         }
 
@@ -119,7 +122,7 @@ impl HostBlocker {
             return Err(BlockerError::FailedToDeserialize);
         }
         
-        let hosts2_path = self.path.join("2");
+        let hosts2_path = self.hosts_path.join("2");
         
         //todo: if hosts2 exists at this point we have hit the edge case where the program quit early. Handle this somehow.
         let mut hosts2_file = File::create(hosts2_path).map_err(|_e| Err(BlockerError::FailedToDeserialize))?; 

@@ -11,4 +11,7 @@ impl Website {
             url: Url::parse(path)?
         })
     }
+    pub fn get_url(&self) -> Url {
+        self.url
+    }
 }
