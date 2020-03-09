@@ -10,6 +10,7 @@ use crate::website::*;
 
 struct HostBlocker {
     hosts_path: PathBuf,
+    hosts2_path: PathBuf,
     redirect: &'static str,
     blocked_sites: HashSet<Website>
 }
@@ -58,8 +59,7 @@ impl WebsiteBlocker for HostBlocker {
 
     fn clear(&mut self) -> Result<(), BlockerError> {
         self.reset_hosts()?;
-        let hosts2_path = self.hosts_path.join("2");
-        std::fs::remove_file(hosts2_path).map_err(|_e| BlockerError::FailedToSerialize)?;
+        std::fs::remove_file(&self.hosts2_path).map_err(|_e| BlockerError::FailedToSerialize)?;
         self.blocked_sites.clear();
         Ok(())
     }
@@ -71,11 +71,18 @@ impl HostBlocker {
 
         let new_hostblocker = HostBlocker { 
             hosts_path: PathBuf::from("/etc/hosts"),
+            hosts2_path: PathBuf::from("/etc/hosts2"),
             redirect: "127.0.0.1",
             blocked_sites: HashSet::new()  
         };
 
-        new_hostblocker.save_hosts()?; // todo: handle case where hosts2 exists
+        if new_hostblocker.hosts2_path.exists() {
+            // if hosts2 exists at this point we have hit the edge case where the program quit early. Revert back to the original host file before we begin.
+            new_hostblocker.reset_hosts()?;
+            std::fs::remove_file(&new_hostblocker.hosts2_path).map_err(|_e| BlockerError::FailedToSerialize)?;
+        }
+
+        new_hostblocker.save_hosts()?; 
         Ok(new_hostblocker)
     }
 
@@ -88,11 +95,17 @@ impl HostBlocker {
                                             .append(true)
                                             .open(&self.hosts_path)
                                             .map_err(|_e| BlockerError::FailedToDeserialize)?;
+        
+        hosts_file.write(format!("\n#Start ContextSwitch Block").as_bytes())
+        .map_err(|_e| BlockerError::FailedToSerialize)?;
 
         for site in self.blocked_sites.iter() {
             hosts_file.write(format!("\n{} {}", self.redirect, site.get_url().as_str()).as_bytes())
             .map_err(|_e| BlockerError::FailedToSerialize)?;            
         }
+
+        hosts_file.write(format!("\n#End ContextSwitch Block").as_bytes())
+        .map_err(|_e| BlockerError::FailedToSerialize)?;
         Ok(())
     }
 
@@ -102,13 +115,11 @@ impl HostBlocker {
             return Err(BlockerError::FailedToDeserialize);
         }
 
-        let hosts2_path = self.hosts_path.join("2");
-
-        if !hosts2_path.exists() {
+        if !self.hosts2_path.exists() {
             return Err(BlockerError::FailedToDeserialize);
         }
 
-        copy(hosts2_path, &self.hosts_path).map_err(|_e| BlockerError::FailedToDeserialize)?;
+        copy(&self.hosts2_path, &self.hosts_path).map_err(|_e| BlockerError::FailedToDeserialize)?;
         Ok(())
     }
 
@@ -116,13 +127,11 @@ impl HostBlocker {
         if !self.hosts_path.exists() {
             return Err(BlockerError::FailedToDeserialize);
         }
-        
-        let hosts2_path = self.hosts_path.join("2");
-        
-        //todo: if hosts2 exists at this point we have hit the edge case where the program quit early. Handle this somehow.
-        File::create(&hosts2_path).map_err(|_e| BlockerError::FailedToDeserialize)?; 
-        
-        copy(&self.hosts_path, &hosts2_path).map_err(|_e| BlockerError::FailedToDeserialize)?;
+
+        File::create(&self.hosts2_path).map_err(|_e| BlockerError::FailedToDeserialize)?; 
+    
+        copy(&self.hosts_path, &self.hosts2_path).map_err(|_e| BlockerError::FailedToDeserialize)?;
         Ok(())
+        
     }
 }
