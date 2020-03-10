@@ -2,6 +2,8 @@ use crate::website::Website;
 use chrono::{DateTime, TimeZone, NaiveDateTime};
 use std::collections::HashSet;
 use std::iter::FromIterator;
+use serde::{Serialize, Deserialize};
+use serde_yaml;
 
 pub enum BlockError {
     StartAfterEnd
@@ -9,11 +11,13 @@ pub enum BlockError {
 
 pub type Timestamp = i64;
 
+#[derive(Serialize, Deserialize)]
 pub enum BlockList {
     Whitelist(HashSet<Website>),
     Blacklist(HashSet<Website>)
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Block {
     list : BlockList,
     time_start : NaiveDateTime,
@@ -81,6 +85,15 @@ impl Block {
         }
     }
 
+    pub fn serialize<T : Write>(&self, writer : &mut T) -> Result<(), Box<dyn Error>> {
+        let yaml = serde_yaml::to_string(&self)?;
+        writer.write_all(yaml.to_bytes())?;
+        Ok(())
+    }
+
+    pub fn from_serialized<T: Read>(read : t) -> Result<Block, Error> {
+        serde_yaml::from_reader(t)
+    }
 }
 
 

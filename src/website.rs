@@ -1,9 +1,16 @@
 use url::{Url, ParseError};
+use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Eq, Hash, Clone)]
+struct Url2 {
+
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
 pub struct Website {
+    #[serde(with = "url_serde")]
     url : Url
 }
+
 
 impl Website {
     pub fn from_path(path : &str) -> Result<Self, ParseError> {
