@@ -7,13 +7,14 @@ use crate::website::Website;
 use crate::website_blocker::WebsiteBlocker;
 use chrono::DateTime;
 use crate::curr_time_fetcher::CurrTimeFetcher;
+use std::collections::HashSet;
 
 pub struct Runner<T : WebsiteBlocker> {
     sender : Sender<Msg>
 }
 
 enum State {
-    Running,
+    Running(HashSet<usize>),
     Pausing
 }
 
@@ -30,6 +31,14 @@ enum Msg {
 }
 
 impl<T : WebsiteBlocker, V : CurrTimeFetcher> Worker<T, V> {
+    fn new(sched : Scheduler, blocker : T) -> Self {
+        Worker {
+            sched,
+            blocker,
+            state: State::Pausing
+        }
+    }
+
     fn spawn_worker(mut worker: Worker<T, V>) -> Sender<Msg> {
         let (tx, rx) = channel::<Msg>();
 
@@ -48,13 +57,17 @@ impl<T : WebsiteBlocker, V : CurrTimeFetcher> Worker<T, V> {
 
     fn handle_msg(&mut self, m : msg)  {
         let old_state = &self.state;
-        self.state = match Msg {
+        let new_state = match Msg {
             Msg::Pause => State::Pausing,
             Msg::Resume => State::Running,
         };
 
-        if old_state == State::Running && self.state == State::Pausing {
+        if old_state == State::Running && new_state == State::Pausing {
             self.blocker.clear();
+        }
+
+        if old_state == State::Pausing && new_state == State::Running {
+            self.state = State::Running(HashSet::new())
         }
     }
 
@@ -62,7 +75,10 @@ impl<T : WebsiteBlocker, V : CurrTimeFetcher> Worker<T, V> {
         if self.state == State::Pausing {
             return;
         }
-        self.sched.get_block_list(V::now());
+        let now = V::now();
+        let ids = self.sched.get_block_ids(now);
+        let values = self.sched.get_block_list(V::now());
+        self.blocker.block(self.sched.get_block_list(V::now()));
 
 
     }
