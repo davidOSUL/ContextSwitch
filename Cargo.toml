@@ -8,16 +8,9 @@ edition = "2018"
 
 [dependencies]
 url = "2.1.1"
-chrono = "0.4.11"
+chrono = { version = "0.4.11", features = ["serde"] }
 intervaltree = "0.2.5"
 thiserror = "1.0"
 serde = {version = "1.0", features = ["derive"]}
 serde_yaml = "0.8"
-
-
-
-
-
-
-
-
+url_serde = "0.2.0"

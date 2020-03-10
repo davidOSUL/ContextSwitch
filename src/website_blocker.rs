@@ -18,43 +18,19 @@ pub struct HostBlocker {
 
 
 pub trait WebsiteBlocker {
-
-    fn block(&mut self, w: &[Website]) -> Result<(), BlockerError>;
     
-    fn unblock(&mut self, w: &[Website]) -> Result<(), BlockerError>;
+    fn set_block_list(&mut self, w: &[Website]) -> Result<(), BlockerError>;
 
     fn clear(&mut self) -> Result<(), BlockerError>;
 }
 
 impl WebsiteBlocker for HostBlocker {
     
-    fn block(&mut self, w: &[Website]) -> Result<(), BlockerError> {
-        //let mut file_contents = String::new();
-        
-        //hosts_file.read_to_string(&mut file_contents).map_err(|_e| BlockerError::FailedToDeserialize)?;
-        
-        //let file_words: Vec<&str> = file_contents.split_whitespace().collect();
+    fn set_block_list(&mut self, w: &[Website]) -> Result<(), BlockerError> {
+        self.blocked_sites.clear();
         for site in w.iter() {
-            if !self.blocked_sites.contains(site) {
-                self.blocked_sites.insert(site.to_owned());
-            } else {
-                return Err(BlockerError::SiteAlreadyBlocked);
-            }
+            self.blocked_sites.insert(site.to_owned());
         }
-        
-        self.sync_hosts()?;
-        Ok(())
-    }
-    
-    fn unblock(&mut self, w: &[Website]) -> Result<(), BlockerError> {
-        for site in w.iter() {
-            if self.blocked_sites.contains(site) {
-                self.blocked_sites.remove(site);
-            } else {
-                return Err(BlockerError::SiteAlreadyBlocked);
-            }
-        }
-        
         self.sync_hosts()?;
         Ok(())
     }
