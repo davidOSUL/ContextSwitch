@@ -2,10 +2,7 @@ use crate::website::Website;
 use chrono::{DateTime, TimeZone, NaiveDateTime};
 use std::collections::HashSet;
 use std::iter::FromIterator;
-
-pub enum BlockError {
-    StartAfterEnd
-}
+use crate::errors::BlockError;
 
 pub type Timestamp = i64;
 
@@ -42,12 +39,12 @@ impl BlockList {
 
 
 impl Block {
-    pub fn from_blacklist<Tz : TimeZone, Tz2: TimeZone>(blacklist : &[Website], time_start: DateTime<Tz>, time_end: DateTime<Tz2>) -> Result<Self, BlockError>  {
+    pub fn from_blacklist<Tz : TimeZone, Tz2: TimeZone>(blacklist : Vec<Website>, time_start: DateTime<Tz>, time_end: DateTime<Tz2>) -> Result<Self, BlockError>  {
         if time_start > time_end {
             return Err(BlockError::StartAfterEnd);
         }
         Ok(Block {
-            list : BlockList::Blacklist(HashSet::from_iter(blacklist.to_vec().into_iter())),
+            list : BlockList::Blacklist(HashSet::from_iter(blacklist.into_iter())),
             time_start: time_start.naive_utc(),
             time_end : time_end.naive_utc()
         })
@@ -80,7 +77,6 @@ impl Block {
             end: self.end_timestamp()+1
         }
     }
-
 }
 
 
