@@ -1,10 +1,11 @@
 use crate::scheduler::Block;
 use crate::scheduler::block::Timestamp;
-use chrono::{TimeZone, DateTime};
+use chrono::{TimeZone, DateTime, NaiveDateTime};
 use intervaltree::{IntervalTree, Element};
 use std::collections::HashMap;
 use crate::scheduler::block::BlockList;
 use std::iter::FromIterator;
+use std::time::SystemTime;
 
 pub enum SchedulerError {
     Contradiction

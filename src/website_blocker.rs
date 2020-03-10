@@ -9,20 +9,20 @@ use std::collections::HashSet;
 
 use crate::website::*;
 
-enum BlockerError { // todo convert this into an actual error type
+pub enum BlockerError { // todo convert this into an actual error type
     SiteAlreadyBlocked,
     SiteAlreadyUnblocked,
     FailedToSerialize,
     FailedToDeserialize
 }
 
-struct HostBlocker {
+pub struct HostBlocker {
     hosts_path: PathBuf,
     redirect: &'static str,
     blocked_sites: HashSet<Website>
 }
 
-trait WebsiteBlocker {
+pub trait WebsiteBlocker {
     fn new() -> Result<(Self), Box<dyn Error>> where Self: Sized;
     
     fn block(&self, w: Website) -> Result<(), BlockerError>;
