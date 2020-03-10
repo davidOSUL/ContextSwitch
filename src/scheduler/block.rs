@@ -2,22 +2,15 @@ use crate::website::Website;
 use chrono::{DateTime, TimeZone, NaiveDateTime};
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use serde::{Serialize, Deserialize};
-use serde_yaml;
-
-pub enum BlockError {
-    StartAfterEnd
-}
+use crate::errors::BlockError;
 
 pub type Timestamp = i64;
 
-#[derive(Serialize, Deserialize)]
 pub enum BlockList {
     Whitelist(HashSet<Website>),
     Blacklist(HashSet<Website>)
 }
 
-#[derive(Serialize, Deserialize)]
 pub struct Block {
     list : BlockList,
     time_start : NaiveDateTime,
@@ -46,12 +39,12 @@ impl BlockList {
 
 
 impl Block {
-    pub fn from_blacklist<Tz : TimeZone, Tz2: TimeZone>(blacklist : &[Website], time_start: DateTime<Tz>, time_end: DateTime<Tz2>) -> Result<Self, BlockError>  {
+    pub fn from_blacklist<Tz : TimeZone, Tz2: TimeZone>(blacklist : Vec<Website>, time_start: DateTime<Tz>, time_end: DateTime<Tz2>) -> Result<Self, BlockError>  {
         if time_start > time_end {
             return Err(BlockError::StartAfterEnd);
         }
         Ok(Block {
-            list : BlockList::Blacklist(HashSet::from_iter(blacklist.to_vec().into_iter())),
+            list : BlockList::Blacklist(HashSet::from_iter(blacklist.into_iter())),
             time_start: time_start.naive_utc(),
             time_end : time_end.naive_utc()
         })
@@ -83,16 +76,6 @@ impl Block {
             start: self.start_timestamp(),
             end: self.end_timestamp()+1
         }
-    }
-
-    pub fn serialize<T : Write>(&self, writer : &mut T) -> Result<(), Box<dyn Error>> {
-        let yaml = serde_yaml::to_string(&self)?;
-        writer.write_all(yaml.to_bytes())?;
-        Ok(())
-    }
-
-    pub fn from_serialized<T: Read>(read : t) -> Result<Block, Error> {
-        serde_yaml::from_reader(t)
     }
 }
 

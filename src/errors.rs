@@ -7,3 +7,9 @@ pub enum BlockerError {
     #[error("Failed to deserialize")]
     FailedToDeserialize
 }
+
+#[derive(Debug, Error)]
+pub enum BlockError {
+    #[error("Start time is after end time")]
+    StartAfterEnd
+}

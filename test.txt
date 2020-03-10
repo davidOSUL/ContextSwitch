@@ -1,0 +1,16 @@
+- 
+	start_time: 20:00
+	end_time: 21:00
+	dates:
+		- 2020-05-01
+	websites:
+		- news.ycombinator.com
+		- www.reddit.com
+- 
+	start_time: 08:00
+	end_time: 16:00
+	dates:
+		- 2020-06-01
+		- 2020-06-02
+	websites:
+		- www.facebook.com
