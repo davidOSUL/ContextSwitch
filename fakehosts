@@ -1,0 +1,9 @@
+
+#Start ContextSwitch Block
+127.0.0.1 https://www.reddit.com/
+127.0.0.1 https://news.ycombinator.com/
+#End ContextSwitch Block
+#Start ContextSwitch Block
+127.0.0.1 https://www.reddit.com/
+127.0.0.1 https://news.ycombinator.com/
+#End ContextSwitch Block
