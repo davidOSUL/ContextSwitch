@@ -1,17 +1,19 @@
+#![allow(dead_code)]
+
 use crate::curr_time_fetcher::CurrTimeFetcher;
 use crate::scheduler::Scheduler;
-use crate::website_blocker::{WebsiteBlocker, BlockerError};
+use crate::website_blocker::{BlockerError, WebsiteBlocker};
 use std::collections::HashSet;
+use std::marker::PhantomData;
+use std::marker::Send;
 use std::sync::mpsc::{channel, Sender, TryRecvError};
 use std::thread;
 use std::time::Duration;
 use thiserror::Error;
-use std::marker::PhantomData;
-use std::marker::Send;
 
 pub struct Runner<T: WebsiteBlocker + Send + 'static, V: CurrTimeFetcher + Send + 'static> {
-    blocker_type : std::marker::PhantomData<T>,
-    fetcher_type : std::marker::PhantomData<V>,
+    blocker_type: std::marker::PhantomData<T>,
+    fetcher_type: std::marker::PhantomData<V>,
     sender: Sender<Msg>,
 }
 
@@ -29,7 +31,7 @@ enum State {
 }
 
 struct Worker<T: WebsiteBlocker + Send + 'static, V: CurrTimeFetcher + Send + 'static> {
-    time_fetcher : V,
+    time_fetcher: V,
     sched: Scheduler,
     blocker: T,
     state: State,
@@ -80,7 +82,7 @@ impl<T: WebsiteBlocker + Send + 'static, V: CurrTimeFetcher + Send + 'static> Wo
         Ok(false)
     }
 
-    fn handle_msg(&mut self, m: Msg) -> Result<(), BlockerError>{
+    fn handle_msg(&mut self, m: Msg) -> Result<(), BlockerError> {
         match (&self.state, m) {
             (State::Running(_), Msg::Pause) => {
                 self.blocker.clear()?;
@@ -103,11 +105,15 @@ impl<T: WebsiteBlocker + Send + 'static, V: CurrTimeFetcher + Send + 'static> Wo
                 if hs.eq(&ids) {
                     return Ok(());
                 }
-                let values = self.sched.get_block_list(&now).iter().flat_map(|bl| bl.get_list()).cloned()
+                let values = self
+                    .sched
+                    .get_block_list(&now)
+                    .iter()
+                    .flat_map(|bl| bl.get_list())
+                    .cloned()
                     .collect::<Vec<_>>();
                 self.blocker.set_block_list(values)?;
                 self.state = State::Running(ids);
-
             }
         };
         Ok(())
@@ -116,9 +122,13 @@ impl<T: WebsiteBlocker + Send + 'static, V: CurrTimeFetcher + Send + 'static> Wo
 
 impl<T: WebsiteBlocker + Send + 'static, V: CurrTimeFetcher + Send + 'static> Runner<T, V> {
     pub fn new(sched: Scheduler, blocker: T, time_fetcher: V) -> Self {
-        let w = Worker::new(sched, blocker, time_fetcher,State::Pausing);
+        let w = Worker::new(sched, blocker, time_fetcher, State::Pausing);
         let sender = Worker::spawn_worker_thread(w);
-        Runner { blocker_type: PhantomData, fetcher_type: PhantomData, sender }
+        Runner {
+            blocker_type: PhantomData,
+            fetcher_type: PhantomData,
+            sender,
+        }
     }
 
     pub fn poll_finished(&self) -> bool {
@@ -128,12 +138,12 @@ impl<T: WebsiteBlocker + Send + 'static, V: CurrTimeFetcher + Send + 'static> Ru
     pub fn start_or_resume(&self) -> Result<(), RunnerError> {
         self.sender
             .send(Msg::Resume)
-            .map_err(|e| RunnerError::FailedToStartOrResume)
+            .map_err(|_e| RunnerError::FailedToStartOrResume)
     }
 
     pub fn pause(&self) -> Result<(), RunnerError> {
         self.sender
             .send(Msg::Pause)
-            .map_err(|e| RunnerError::FailedToPause)
+            .map_err(|_e| RunnerError::FailedToPause)
     }
 }

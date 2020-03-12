@@ -6,7 +6,9 @@ pub trait CurrTimeFetcher {
 }
 
 impl SystemTime {
-    pub fn new() -> Self {Self}
+    pub fn new() -> Self {
+        Self
+    }
 }
 
 impl CurrTimeFetcher for SystemTime {

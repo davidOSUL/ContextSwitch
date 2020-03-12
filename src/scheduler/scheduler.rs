@@ -1,13 +1,15 @@
+#![allow(dead_code)]
+
 use crate::scheduler::block::BlockList;
 use crate::scheduler::block::Timestamp;
 use crate::scheduler::Block;
-use chrono::{DateTime, NaiveDateTime, TimeZone};
+use chrono::{DateTime, TimeZone};
 use intervaltree::{Element, IntervalTree};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
+
 use std::iter::FromIterator;
-use std::time::SystemTime;
+
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -70,8 +72,8 @@ impl Scheduler {
     }
 
     pub fn is_past_end<Tz: TimeZone>(&self, curr_time: &DateTime<Tz>) -> bool {
-        let x = curr_time.timestamp();
-        return curr_time.timestamp() > self.max_end;
+        let _x = curr_time.timestamp();
+        curr_time.timestamp() > self.max_end
     }
 
     pub fn get_block_ids<Tz: TimeZone>(&self, curr_time: &DateTime<Tz>) -> HashSet<usize> {

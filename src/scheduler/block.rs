@@ -1,7 +1,8 @@
+#![allow(dead_code)]
+
 use crate::website::Website;
 use chrono::{DateTime, NaiveDateTime, TimeZone};
-use std::collections::HashSet;
-use std::iter::FromIterator;
+
 use thiserror::Error;
 
 pub type Timestamp = i64;
@@ -57,7 +58,7 @@ impl Block {
             time_end: time_end.naive_utc(),
         })
     }
-
+    #[allow(dead_code)]
     pub fn contains_time<Tz2: TimeZone>(&self, time: DateTime<Tz2>) -> bool {
         time.naive_utc() >= self.time_start && time.naive_utc() <= self.time_end
     }
@@ -79,9 +80,6 @@ impl Block {
     //    }
 
     pub fn get_range(&self) -> std::ops::Range<Timestamp> {
-        std::ops::Range {
-            start: self.start_timestamp(),
-            end: self.end_timestamp() + 1,
-        }
+        self.start_timestamp()..self.end_timestamp() + 1
     }
 }

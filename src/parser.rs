@@ -2,12 +2,12 @@
 
 use crate::scheduler::Block;
 use crate::website::Website;
-use chrono::{DateTime, Local, NaiveDateTime, TimeZone, Utc};
+use chrono::{Local, TimeZone};
 use serde::Deserialize;
 use std::error::Error;
-use std::fs;
+
 use std::fs::File;
-use std::io::Read;
+
 use std::collections::HashMap;
 
 #[derive(Deserialize)]
@@ -23,7 +23,7 @@ struct MemoryBlock {
     websites: Vec<String>,
 }
 
-pub fn parse_from_file(mut file: File) -> Result<Vec<Block>, Box<dyn Error>> {
+pub fn parse_from_file(file: File) -> Result<Vec<Block>, Box<dyn Error>> {
     let mem_blocks: MemoryBlocks = serde_yaml::from_reader(file)?;
 
     let mut blocks: Vec<Block> = vec![];

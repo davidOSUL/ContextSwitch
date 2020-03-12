@@ -6,12 +6,12 @@ mod website;
 mod website_blocker;
 use app_dirs::*;
 
-use std::{env, thread};
+use std::error::Error;
 use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
-use std::error::Error;
 use std::time::Duration;
+use std::{env, thread};
 
 const APP_INFO: AppInfo = AppInfo {
     name: "ContextSwitch",
@@ -21,28 +21,26 @@ const APP_INFO: AppInfo = AppInfo {
 struct AppData {
     old_host_file: PathBuf,
     old_input_file: PathBuf,
-    host_path : PathBuf,
+    host_path: PathBuf,
 }
 
-static HOST_PATH : &str  = "/etc/hosts";
+static HOST_PATH: &str = "/etc/hosts";
 //static HOST_PATH : &str  = "fakehosts";
 
 impl AppData {
     fn new() -> Result<Self, Box<dyn Error>> {
-        let mut old_host_file =
-            app_dir(AppDataType::UserData, &APP_INFO, ".old_host")?;
+        let mut old_host_file = app_dir(AppDataType::UserData, &APP_INFO, ".old_host")?;
         old_host_file.push(".oldhost");
-        let mut old_input_file =
-            app_dir(AppDataType::UserData, &APP_INFO, ".old_input")?;
+        let mut old_input_file = app_dir(AppDataType::UserData, &APP_INFO, ".old_input")?;
         old_input_file.push(".oldinput");
         Ok(AppData {
             old_host_file,
             old_input_file,
-            host_path : PathBuf::from_str(HOST_PATH)?
+            host_path: PathBuf::from_str(HOST_PATH)?,
         })
     }
 
-    fn clear_cache(&self) -> Result<(), Box<dyn Error>>{
+    fn clear_cache(&self) -> Result<(), Box<dyn Error>> {
         std::fs::remove_file(&self.old_input_file)?;
         std::fs::remove_file(&self.old_host_file)?;
         Ok(())
@@ -50,15 +48,19 @@ impl AppData {
 }
 type RunnerType = runner::Runner<website_blocker::HostBlocker, curr_time_fetcher::SystemTime>;
 
-fn get_runner_helper(app_data: &AppData, fail_on_old_hosts_exists: bool) -> Result<RunnerType, Box<dyn Error>> {
-    let old_input_file =
-        File::open(&app_data.old_input_file)?;
+fn get_runner_helper(
+    app_data: &AppData,
+    fail_on_old_hosts_exists: bool,
+) -> Result<RunnerType, Box<dyn Error>> {
+    let old_input_file = File::open(&app_data.old_input_file)?;
     //let old_input_file = File::open(PathBuf::from_str("test.yaml").unwrap()).unwrap();
     let blocks = parser::parse_from_file(old_input_file)?;
     let sched = scheduler::Scheduler::new(blocks)?;
-    let blocker =
-        website_blocker::HostBlocker::new(fail_on_old_hosts_exists, app_data.host_path.clone(), app_data.old_host_file.clone())
-            ?;
+    let blocker = website_blocker::HostBlocker::new(
+        fail_on_old_hosts_exists,
+        app_data.host_path.clone(),
+        app_data.old_host_file.clone(),
+    )?;
     let time_fetcher = curr_time_fetcher::SystemTime::new();
     Ok(runner::Runner::new(sched, blocker, time_fetcher))
 }
@@ -78,9 +80,9 @@ fn main_runner() -> Result<(), Box<dyn Error>> {
         }
         (false, true) => panic!("Existing session in progress -- cannot start a new session. Rerun with no input file to continue current session."),
         (false, false) => {
-            let inputPath = PathBuf::from_str(args[0].as_str())?;
-            assert!(inputPath.exists(), "input path doesn't exist");
-            std::fs::copy(inputPath, &app_data.old_input_file)?;
+            let input_path = PathBuf::from_str(args[0].as_str())?;
+            assert!(input_path.exists(), "input path doesn't exist");
+            std::fs::copy(input_path, &app_data.old_input_file)?;
             true //case of new session, if an old hosts copy exists, it implies we messed up somehow
         }
         (true, true) => false, //case of resume, don't fail if hosts copy exists
@@ -90,7 +92,7 @@ fn main_runner() -> Result<(), Box<dyn Error>> {
 
     runner.start_or_resume()?;
     loop {
-        if (runner.poll_finished()) {
+        if runner.poll_finished() {
             break;
         }
         thread::sleep(Duration::from_millis(2000))
@@ -103,16 +105,11 @@ fn main_runner() -> Result<(), Box<dyn Error>> {
 }
 
 fn main() {
-
     if let Err(e) = main_runner() {
         if let Ok(ad) = AppData::new() {
-            if let Ok(_) = ad.clear_cache() {
-
-            }
+            if ad.clear_cache().is_ok() {}
         }
         let s = format!("FATAL ERROR: {:?}", e);
         panic!(s);
     }
-
-
 }

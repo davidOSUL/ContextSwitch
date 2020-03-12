@@ -3,7 +3,7 @@ use std::fs::copy;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
-use std::path::{PathBuf, Path};
+use std::path::PathBuf;
 use thiserror::Error;
 
 use crate::website::*;
@@ -48,7 +48,11 @@ impl WebsiteBlocker for HostBlocker {
 }
 
 impl HostBlocker {
-    pub fn new(fail_on_exists: bool, hosts_path : PathBuf, hosts2_path: PathBuf) -> Result<(Self), BlockerError> {
+    pub fn new(
+        fail_on_exists: bool,
+        hosts_path: PathBuf,
+        hosts2_path: PathBuf,
+    ) -> Result<(Self), BlockerError> {
         let new_hostblocker = HostBlocker {
             hosts_path,
             hosts2_path,
@@ -70,10 +74,9 @@ impl HostBlocker {
         Ok(new_hostblocker)
     }
 
-
     // resets hosts back to its original state and rewrites all the websites that need to be blocked
     fn sync_hosts(&self) -> Result<(), BlockerError> {
-       self.reset_hosts()?;
+        self.reset_hosts()?;
 
         let mut hosts_file = OpenOptions::new()
             .read(true)
@@ -82,7 +85,7 @@ impl HostBlocker {
             .map_err(|_e| BlockerError::FailedToDeserialize)?;
 
         hosts_file
-            .write(format!("\n#Start ContextSwitch Block").as_bytes())
+            .write("\n#Start ContextSwitch Block\n".to_string().as_bytes())
             .map_err(|_e| BlockerError::FailedToSerialize)?;
 
         for site in self.blocked_sites.iter() {
@@ -92,7 +95,7 @@ impl HostBlocker {
         }
 
         hosts_file
-            .write(format!("\n#End ContextSwitch Block\n").as_bytes())
+            .write("\n#End ContextSwitch Block\n".to_string().as_bytes())
             .map_err(|_e| BlockerError::FailedToSerialize)?;
         Ok(())
     }
@@ -106,8 +109,6 @@ impl HostBlocker {
         if !self.hosts2_path.exists() {
             return Err(BlockerError::FailedToDeserialize);
         }
-
-
 
         copy(&self.hosts2_path, &self.hosts_path)
             .map_err(|_e| BlockerError::FailedToDeserialize)?;
