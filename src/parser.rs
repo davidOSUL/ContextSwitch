@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::scheduler::Block;
 use crate::website::Website;
 use chrono::{DateTime, Local, NaiveDateTime, TimeZone, Utc};

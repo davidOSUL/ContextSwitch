@@ -1,15 +1,8 @@
 blocks:
  block1:
-  start_time: "05:03:00"
-  end_time: "05:45:00"
+  start_time: "20:50:00"
+  end_time: "20:55:00"
   dates:
-   - "2020-03-10"
+   - "2020-03-11"
   websites:
    - "www.reddit.com"
- block2:
-  start_time: "05:03:00"
-  end_time: "05:46:00"
-  dates:
-   - "2020-03-10"
-  websites:
-   - "news.ycombinator.com"

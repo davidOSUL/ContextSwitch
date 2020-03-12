@@ -6,7 +6,6 @@ mod website;
 mod website_blocker;
 use app_dirs::*;
 
-use crate::website_blocker::HostBlocker;
 use std::{env, thread};
 use std::fs::File;
 use std::path::PathBuf;
@@ -43,9 +42,10 @@ impl AppData {
         })
     }
 
-    fn clear_cache(&self) {
-        std::fs::remove_file(&self.old_input_file);
-        std::fs::remove_file(&self.old_host_file);
+    fn clear_cache(&self) -> Result<(), Box<dyn Error>>{
+        std::fs::remove_file(&self.old_input_file)?;
+        std::fs::remove_file(&self.old_host_file)?;
+        Ok(())
     }
 }
 type RunnerType = runner::Runner<website_blocker::HostBlocker, curr_time_fetcher::SystemTime>;
@@ -76,7 +76,7 @@ fn main_runner() -> Result<(), Box<dyn Error>> {
         (true, false) => {
             panic!("No session in progress. Start a new context switch session with a file")
         }
-        (false, true) => panic!("Existing session in progress -- cannot start a new session"),
+        (false, true) => panic!("Existing session in progress -- cannot start a new session. Rerun with no input file to continue current session."),
         (false, false) => {
             let inputPath = PathBuf::from_str(args[0].as_str())?;
             assert!(inputPath.exists(), "input path doesn't exist");
@@ -106,7 +106,9 @@ fn main() {
 
     if let Err(e) = main_runner() {
         if let Ok(ad) = AppData::new() {
-            ad.clear_cache();
+            if let Ok(_) = ad.clear_cache() {
+
+            }
         }
         let s = format!("FATAL ERROR: {:?}", e);
         panic!(s);
